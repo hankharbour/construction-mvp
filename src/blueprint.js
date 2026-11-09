@@ -4,9 +4,28 @@ import {calibrate, quantity} from './domain.js';
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 const $ = id => document.getElementById(id);
 const canvas = $('measureCanvas'), ctx = canvas.getContext('2d');
+let correction=null;
 let source = null, pdf = null, pages = new Map(), activePage = 1, points = [], mode = 'calibrate', generation = 0;
 const notice = text => $('measureNotice').textContent = text;
 const units = {length:'ft',area:'sq ft',count:'each'};
+$('calibrationStatus').insertAdjacentHTML('afterend','<div id="correctionEditor" hidden><p>Choose a point, then click its corrected position on the drawing. Save to recalculate this measurement.</p><label>Point to correct<select id="correctionPoint"></select></label><button id="saveCorrection">Save correction</button><button id="cancelCorrection">Cancel correction</button></div>');
+function cancelCorrection(){correction=null;$('correctionEditor').hidden=true;points=[];draw();}
+function beginCorrection(measurement){
+  correction={id:measurement.id,page:activePage};points=structuredClone(measurement.points);mode=measurement.kind;
+  $('correctionPoint').replaceChildren(...points.map((_,i)=>new Option(`Point ${i+1}`,String(i))));
+  $('correctionEditor').hidden=false;notice('Select a point, click its new position, then save the correction.');draw();
+}
+$('cancelCorrection').onclick=cancelCorrection;
+$('saveCorrection').onclick=()=>{
+  try {
+    if(!correction||correction.page!==activePage) throw new Error('Select a measurement to correct first.');
+    const page=active(), measurement=page.measurements.find(m=>m.id===correction.id);
+    const value=quantity(measurement.kind,points,page.scale);
+    const history=[...(measurement.corrections||[]),{points:structuredClone(measurement.points),value:measurement.value,changedAt:new Date().toISOString()}];
+    Object.assign(measurement,{points:structuredClone(points),value,corrections:history,verified:false,updatedAt:new Date().toISOString()});
+    cancelCorrection();update();notice('Correction saved. Previous geometry is retained in session exports. Existing estimate snapshots are unchanged.');
+  }catch(error){notice(error.message);}
+};
 function active() { return pages.get(activePage); }
 function draw() {
   const page = active();
@@ -28,14 +47,14 @@ function update() {
     const row = rows.insertRow();
     for (const value of [`${measurement.label} / p.${pageNumber}`,measurement.value.toFixed(2),measurement.unit,'Manual / unverified']) row.insertCell().textContent=value;
     const actions=row.insertCell();
-    for (const [title,handler] of [['View',async()=>{await showPage(pageNumber);notice(`Source: ${measurement.label}; ${measurement.formula}`);}],['Remove',()=>{drawing.measurements=drawing.measurements.filter(m=>m.id!==measurement.id);update();}]]) {
+    for (const [title,handler] of [['View',async()=>{await showPage(pageNumber);notice(`Source: ${measurement.label}; ${measurement.formula}`);}],['Correct',async()=>{await showPage(pageNumber);beginCorrection(measurement);}],['Remove',()=>{cancelCorrection();drawing.measurements=drawing.measurements.filter(m=>m.id!==measurement.id);update();}]]) {
       const button=document.createElement('button');button.textContent=title;button.onclick=handler; actions.append(button);
     }
   }
   draw();
 }
 async function showPage(number) {
-  points=[]; activePage=number;
+  cancelCorrection(); points=[]; activePage=number;
   if (!pages.has(number)) {
     const token=generation;
     const page = await pdf.getPage(number), viewport=page.getViewport({scale:1});
@@ -80,10 +99,13 @@ async function load(file) {
 for (const id of ['measureFile','cameraFile']) $(id).onchange=event=>load(event.target.files[0]);
 $('drawingPage').onchange=async event=>{try{await showPage(Number(event.target.value));notice('Page selected. Calibration is independent for each page.');}catch(error){notice(error.message);}};
 $('drawingZoom').onchange=()=>{canvas.style.width=Number($('drawingZoom').value)*100+'%';};
-for(const [id,tool] of [['startCal','calibrate'],['startLength','length'],['startArea','area'],['startCount','count']]) $(id).onclick=()=>{mode=tool;points=[];notice(tool==='calibrate'?'Click two endpoints of the known distance.':`Select ${tool} points, then finish. Length finishes after two points.`);draw();};
+for(const [id,tool] of [['startCal','calibrate'],['startLength','length'],['startArea','area'],['startCount','count']]) $(id).onclick=()=>{cancelCorrection();mode=tool;points=[];notice(tool==='calibrate'?'Click two endpoints of the known distance.':`Select ${tool} points, then finish. Length finishes after two points.`);draw();};
 canvas.onclick=event=>{
   const page=active();if(!page) return;
-  const rect=canvas.getBoundingClientRect(); points.push({x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height});
+  const rect=canvas.getBoundingClientRect();
+  const point={x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height};
+  if(correction){points[Number($('correctionPoint').value)]=point;draw();return;}
+  points.push(point);
   try {
     if(mode==='calibrate'&&points.length===2) {
       const feet=Number($('knownFeet').value),scale=calibrate(points,feet);
@@ -95,6 +117,7 @@ canvas.onclick=event=>{
 };
 function finish() {
   try {
+    if(correction){$('saveCorrection').click();return;}
     const page=active();if(!page) throw new Error('Load a drawing first.');
     if(mode==='calibrate') throw new Error('Click two endpoints to calibrate.');
     if(!points.length) throw new Error('Select measurement points first.');
@@ -103,7 +126,7 @@ function finish() {
     points=[];notice('Measurement saved as unverified.');update();
   }catch(error){notice(error.message);}
 }
-$('finishArea').onclick=finish;$('undoPoint').onclick=()=>{points.pop();draw();};
+$('finishArea').onclick=finish;$('undoPoint').onclick=()=>{if(correction)return notice('Choose Cancel correction to discard pending point edits.');points.pop();draw();};
 $('exportMeasures').onclick=()=>{
   if(!source) return notice('Load a drawing first.');
   const session={schemaVersion:1,coordinateSystem:'page-pixels',status:'unverified',source,pages:[...pages].map(([number,{image,...page}])=>({number,...page}))};

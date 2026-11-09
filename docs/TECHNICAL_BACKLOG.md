@@ -18,7 +18,7 @@ Acceptance: type checking, calculation tests, production Pages-base build, deskt
 
 ## Next milestones, in order
 
-1. Harden measurement correction and review: editable vertices, second-dimension scale checks, rotation handling, keyboard controls, perspective warnings, explicit reviewer identity. Add large/rotated/encrypted/malformed PDF fixtures and page cache limits. Current bitmap cache can grow with visited pages; upload cap is 40 MB.
+1. Harden measurement correction and review: second-dimension scale checks, rotation handling, keyboard controls, perspective warnings, explicit reviewer identity. Add large/rotated/encrypted/malformed PDF fixtures and page cache limits. Current bitmap cache can grow with visited pages; upload cap is 40 MB.
 2. Complete estimate lifecycle: reviewer identity, versioned revisions and revision deltas, freight/allowances/contingency, rounding policy and tax jurisdiction rules. Line editing, source navigation, unverified assumption display, saved settings and consistent CSV/JSON settings/summary are now implemented. New lines have stable IDs; legacy lines migrate when edited. Current measurement-to-estimate copy is a snapshot; later drawing edits do not update existing estimate lines automatically.
 3. Define canonical persistence schema and API boundaries for organizations, users, memberships, projects, drawings, trades, assemblies, quantities, revisions and audit events. Backend hosting/provider is undecided. Do not claim tenant isolation or store actual customer data until authenticated authorization, isolation tests, private object storage, malware scanning, retention and backup/restore are implemented.
 4. Establish design-system components, route focus management, responsive estimate editing, accessible chart/table patterns, project dashboard and tested empty/error states. Home remains a sample tool launcher.
@@ -34,3 +34,7 @@ Static demo has no authentication, tenant isolation, backup, cloud document pers
 ## Second milestone acceptance
 
 Estimate editor now supports saved pricing settings, editable line items, runtime-validated storage migration, drawing source navigation and consistent summary/settings in JSON and CSV. Quantity/unit corrections detach the drawing snapshot and record a manual assumption. Domain model remains open to all starter/custom trades. Crossed polygon boundaries are rejected. Eight unit tests cover calculations, geometry and persistence. Browser tests run against the actual production build under the GitHub Pages base, on mobile and desktop. No bid approval, audit history or automatic drawing-to-estimate dependencies are claimed.
+
+## Third milestone acceptance
+
+Existing length, polygon and count points can be corrected by choosing a point and clicking its replacement position. Saving recomputes the quantity and retains prior points/value/timestamp in exported sessions; cancel leaves the original unchanged. Measurements remain unverified and prior estimate snapshots remain unchanged. Mobile and desktop browser tests exercise a length correction and check its saved history and recalculated quantity. This is local revision evidence, not an authenticated or tamper-proof audit log.

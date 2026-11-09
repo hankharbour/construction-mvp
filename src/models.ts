@@ -6,6 +6,7 @@ export interface Measurement {
   id: string; label: string; kind: MeasurementKind; points: Point[];
   value: number; unit: 'ft' | 'sq ft' | 'each'; source: DrawingSource;
   page: number; scale: number | null; calibration: Calibration | null;
+  corrections?: {points: Point[]; value: number; changedAt: string}[];
   formula: string; verified: false; createdAt: string; updatedAt?: string;
 }
 export interface EstimateLine {

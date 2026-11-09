@@ -27,6 +27,9 @@ test('multi-page PDF calibration, zoom, provenance, session restore and transfer
   async function point(x,y){const rect=await canvas.boundingBox();await canvas.click({position:{x:rect.width*x,y:rect.height*y}});}
   await point(.1,.1);await point(.5,.1);await expect(page.locator('#calibrationStatus')).not.toContainText('Not calibrated');
   await page.locator('#startLength').click();await point(.1,.2);await point(.5,.2);await expect(page.locator('#measureRows')).toContainText('10.00');
+  await page.locator('#measureRows').getByRole('button',{name:'Correct',exact:true}).first().click();
+  await page.locator('#correctionPoint').selectOption('1');await point(.3,.2);await page.locator('#saveCorrection').click();
+  await expect(page.locator('#measureNotice')).toContainText('Correction saved');
   await page.locator('#drawingPage').selectOption('2');await expect(page.locator('#calibrationStatus')).toContainText('Not calibrated');
   await page.locator('#startCount').click();await point(.1,.1);await point(.2,.1);await page.locator('#finishArea').click();await expect(page.locator('#measureRows')).toContainText('each');
   await page.locator('#drawingPage').selectOption('1');await expect(page.locator('#calibrationStatus')).not.toContainText('Not calibrated');
@@ -38,7 +41,7 @@ test('multi-page PDF calibration, zoom, provenance, session restore and transfer
   await canvas.click({position:{x:20,y:20}});await canvas.click({position:{x:100,y:20}});
   const pending=page.waitForEvent('download');await page.locator('#exportMeasures').click();const download=await pending;
   const stream=await download.createReadStream();const chunks=[];for await(const chunk of stream)chunks.push(chunk);const buffer=Buffer.concat(chunks), session=JSON.parse(buffer);
-  expect(session.pages[0].measurements[0].points).toHaveLength(2);expect(session.source.sha256).toHaveLength(64);expect(session.pages[0].measurements[0].verified).toBe(false);
+  expect(session.pages[0].measurements[0].points).toHaveLength(2);expect(session.pages[0].measurements[0].corrections).toHaveLength(1);expect(Math.abs(session.pages[0].measurements[0].value-5)).toBeLessThan(.1);expect(session.source.sha256).toHaveLength(64);expect(session.pages[0].measurements[0].verified).toBe(false);
   await page.locator('#restoreMeasures').setInputFiles({name:'session.json',mimeType:'application/json',buffer});await expect(page.locator('#measureNotice')).toContainText('Session restored');
   await page.locator('#addToEstimate').click();await expect(page.locator('#estimatePage')).toBeVisible();await expect(page.locator('#itemUnit')).toHaveValue('linear ft');
   await page.locator('#itemCost').fill('5');await page.locator('#addLine').click();
