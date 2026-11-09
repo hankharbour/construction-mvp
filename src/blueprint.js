@@ -45,6 +45,7 @@ async function showPage(number) {
     if(token!==generation) return;
     pages.set(number,{image,width:image.width,height:image.height,scale:null,calibration:null,measurements:[]});
   }
+  if(activePage!==number) return;
   const page=pages.get(number); canvas.width=page.width;canvas.height=page.height;
   $('drawingPage').value=String(number);update();
 }
@@ -140,3 +141,14 @@ $('addToEstimate').onclick=()=>{
   window.dispatchEvent(new CustomEvent('open-workspace',{detail:'estimate'}));
 };
 update();
+
+window.addEventListener('view-measurement',async event=>{
+  const measurement=event.detail;
+  if(!source || source.sha256!==measurement.source?.sha256){window.dispatchEvent(new CustomEvent('measurement-view-error',{detail:'Open the original drawing in Blueprint Studio to view this source snapshot.'}));return;}
+  try {
+    await showPage(measurement.page);
+    window.dispatchEvent(new CustomEvent('open-workspace',{detail:'plans'}));
+    points=measurement.points;mode=measurement.kind;draw();
+    notice(`Estimate source snapshot: ${measurement.label}. This snapshot does not update existing estimate costs when drawing geometry changes.`);
+  }catch(error){notice(error.message);}
+});

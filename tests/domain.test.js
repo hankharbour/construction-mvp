@@ -27,3 +27,11 @@ test('calibrated lengths, polygons, counts, and degenerate calibration', () => {
 test('CSV escapes quotes and spreadsheet formulas',()=>{
   assert.equal(csvCell('=HYPERLINK("bad")'),'"\'=HYPERLINK(""bad"")"');
 });
+test('all twelve starter trades and a custom specialty combine without schema changes',()=>{
+  const trades=['Sitework','Concrete','Framing','Roofing','Exterior','Electrical','Plumbing','HVAC','Drywall','Interiors','Openings','Specialty','Fire suppression'];
+  const lines=trades.flatMap(trade=>['Material','Labor','Equipment','Subcontract'].map(category=>({trade,category,qty:1,unitCost:100,waste:10})));
+  assert.equal(estimate(lines).subtotal,5330);
+});
+test('crossed polygon boundaries are rejected',()=>{
+  assert.throws(()=>quantity('area',[{x:0,y:0},{x:100,y:100},{x:0,y:100},{x:100,y:0}],1),/cross/);
+});

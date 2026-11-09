@@ -9,7 +9,7 @@ export interface Measurement {
   formula: string; verified: false; createdAt: string; updatedAt?: string;
 }
 export interface EstimateLine {
-  trade: string; name: string; category: 'Material' | 'Labor' | 'Equipment' | 'Subcontract';
+  id?: string; trade: string; name: string; category: 'Material' | 'Labor' | 'Equipment' | 'Subcontract';
   qty: number; unit: string; unitCost: number; waste: number; code: string;
   source?: Measurement | {status: 'unverified'; assumption: string};
 }

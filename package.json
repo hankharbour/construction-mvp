@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build --base=/construction-mvp/",
+    "build": "vite build",
     "test": "node --test tests/*.test.js",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm test && npm run build && npm run test:e2e",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "preview": "vite preview"
   },
   "dependencies": {
     "pdfjs-dist": "^6.5.438"

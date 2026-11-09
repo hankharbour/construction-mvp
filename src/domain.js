@@ -22,6 +22,15 @@ export function quantity(kind, points, scale) {
     return distance(points[0],points[1]) * scale;
   }
   if (points.length < 3) throw new Error('Select at least three polygon corners.');
+  // Reject crossed boundaries instead of reporting misleading shoelace quantities.
+  /** @param {import("./models").Point} a @param {import("./models").Point} b @param {import("./models").Point} c */
+  const cross = (a, b, c) => (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+  for(let i=0;i<points.length;i++) for(let j=i+1;j<points.length;j++) {
+    const nextI=(i+1)%points.length, nextJ=(j+1)%points.length;
+    if(nextI===j || nextJ===i) continue;
+    const a=points[i],b=points[nextI],c=points[j],d=points[nextJ];
+    if(cross(a,b,c)*cross(a,b,d)<0 && cross(c,d,a)*cross(c,d,b)<0) throw new Error('Polygon edges cross. Redraw a simple boundary.');
+  }
   const area = Math.abs(points.reduce((sum, p, i) => {
     const next = points[(i + 1) % points.length];
     return sum + p.x * next.y - next.x * p.y;

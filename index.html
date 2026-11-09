@@ -38,11 +38,11 @@
 <label>Unit cost ($)<input id="itemCost" type="number" min="0" step=".01" value="0"></label>
 <label>Waste (%) — material only<input id="itemWaste" type="number" min="0" step=".1" value="0"></label>
 <label>Cost code<input id="costCode" placeholder="e.g. 03-3000"></label>
-</div><button id="addLine">Add line item</button><button id="clearLines">Clear estimate</button>
+</div><p id="estimateNotice" role="status" aria-live="polite"></p><button id="addLine">Add line item</button><button id="cancelEdit" hidden>Cancel edit</button><button id="clearLines">Clear estimate</button>
 <div style="overflow-x:auto"><table><thead><tr><th>Trade / item</th><th>Category</th><th>Qty</th><th>Unit</th><th>Cost</th><th></th></tr></thead><tbody id="lineRows"></tbody></table></div>
 <div class="grid"><label>Overhead (%)<input id="overheadPct" type="number" min="0" value="10"></label><label>Profit method<select id="profitMode"><option value="margin">Margin on selling price</option><option value="markup">Markup on cost</option></select></label><label>Profit (%)<input id="marginPct" type="number" min="0" max="99" value="20"></label><label>Tax on materials (%)<input id="taxPct" type="number" min="0" value="0"></label></div>
 <div id="estimateTotals"></div><button id="exportLines">Export itemized CSV</button><button id="exportLinesJson">Export estimate JSON</button>
-<p><small>Margin is calculated on the selling price (not a simple markup). Tax is an illustrative material-cost allowance, not a tax determination. Use non-sensitive sample data only. Estimate items are stored in this browser until cleared; exports stay under your control.</small></p></section>
+<p><small>Choose margin on selling price or markup on total cost. Tax is an illustrative material-cost allowance, not a tax determination. Use non-sensitive sample data only. Estimate items are stored in this browser until cleared; exports stay under your control.</small></p></section>
 </div><div id="plansPage" class="workspace-page" hidden><section class="panel" id="drawing-workspace"><h2>Blueprint Measurement Workspace — Beta</h2><p>Upload a sample PDF or image. Calibrate every page against a known dimension. Measurements remain unverified.</p>
 <label>Drawing image or PDF<input id="measureFile" type="file" accept="image/*,.pdf,application/pdf"></label>
 <label>Or photograph a sample drawing<input id="cameraFile" type="file" accept="image/*" capture="environment"></label>
